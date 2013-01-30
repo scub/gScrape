@@ -17,7 +17,11 @@ class gScrape:
 
                 Example Usage
                 =============
-                # Search for 'test it' and Pull 25 links through a locally bound proxy
+                        # Search for 'test it' and Pull 25 links through a locally bound proxy on 8118
+                        g = gScrape( 'test it', proxy='127.0.0.1:8118' )
+                        for link in g.links(): print( link )
+
+
         """
         def __init__( self, query, page=0, links=25, proxy=None, verbose=False ):
                 """
@@ -139,10 +143,10 @@ if __name__ == '__main__':
         parser.add_argument( '-n', '--num', dest="links", default=25, \
                                 help="Number Of Links To Return" )
  
-        parser.add_argument( '-p', '--page', dest='page', default=0, 
+        parser.add_argument( '-p', '--page', dest='page', default=0, \
                                 help="Page To Parse" )
 
-        parser.add_argument( '-P', '--Proxy', dest='proxy', default=None,
+        parser.add_argument( '-P', '--Proxy', dest='proxy', default=None, \
                                 help="Proxy Address To Use" )
 
         parser.add_argument( '-v', '--verbose',  action='store_true', dest='verbose', default=False, \
