@@ -1,11 +1,22 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 #
 # [ 01/27/2013 ]
 #               Trivial Google Scraper
 #
-from bs4 import BeautifulSoup as Soup
-from urllib.request import build_opener, ProxyHandler
-from urllib.error import URLError
+PY_VER=None
+
+try:
+        PY_VER=3
+        from bs4 import BeautifulSoup as Soup
+        from urllib.request import build_opener, ProxyHandler
+        from urllib.error import URLError
+except:
+        PY_VER=2
+        from BeautifulSoup import BeautifulSoup as Soup
+        from cookielib import FileCookieJar as cookiejar
+        import urllib, urllib2, re
+
+
 from argparse import ArgumentParser
 from random import choice
 from re import compile
@@ -49,6 +60,23 @@ class gScrape:
                                       ],
                 }
 
+                if PY_VER == 2:
+                        self.config[ 'c_jar' ] = cookiejar()
+                        self.getCookie()
+                        if proxy is not None:
+                                urllib2.install_opener( urllib2.build_opener( urllib2.ProxyHandler( { "http" : proxy } ) ) )
+
+
+        def getCookie( self ):
+                req = urllib2.Request( "http://www.google.com" )
+                req.add_header( 'User-Agent', choice( self.config[ 'Agents' ] ) )
+                self.config[ 'c_jar' ].add_cookie_header( req )
+
+                resp = urllib2.urlopen( req )
+                self.config[ 'c_jar' ].extract_cookies( resp, req )
+                resp.close()
+
+
         def die( self, message ):
                 """
                         Error Message And Die - Takes 1 Argument
@@ -78,6 +106,36 @@ class gScrape:
                         Strip A Given Page For Links, Returning Them In A List - Takes 1 Argument
 
                         page_number - Page Number To Parse
+                """
+                if PY_VER == 3:
+                        return self.get_page_3()
+                else:
+                        return self.get_page_2()
+
+
+        def get_page_2( self ):
+                """
+                        Python 2 compatible get_page()
+                """
+                req = urllib2.Request( self.config[ 'url' ].format( self.config[ 'query' ], self.config[ 'page' ] ) )
+                req.add_header( 'User-Agent', choice( self.config[ 'Agents' ] ) )
+                req.add_header( 'Referer:', 'http://www.google.com' )
+                self.config[ 'c_jar' ].add_cookie_header( req )
+
+                try:
+                        resp = urllib2.urlopen( req )
+                        self.config[ 'c_jar' ].extract_cookies( resp, req )
+                        soup = Soup( resp.read() )
+                        resp.close()
+                except ( urllib2.URLError, urllib2.HTTPError ) as Fail:
+                        return '000: FAIL'
+
+                return self.strip_links( soup )
+
+
+        def get_page_3( self ):
+                """
+                        Python 3 compatible get_page()
                 """
                 if self.config['proxy'] is not None:
                         proxy = ProxyHandler( { 'http': self.config['proxy'] } )
